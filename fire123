@@ -1,0 +1,627 @@
+//DHT22 //DHT sensor library //DHT22 //https://wokwi.com/projects/385279460667171841
+#include <DHT.h>
+
+#define DHTPIN 13   // DHT sensor pin
+#define RLED 4    // LED 
+#define GLED 5
+
+#define DHTTYPE DHT22   // DHT sensor type, change to DHT11 if you're using that sensor
+
+DHT dht(DHTPIN, DHTTYPE);
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(RLED, OUTPUT);
+  pinMode(GLED, OUTPUT);
+}
+
+void loop() {
+  // Read temperature and humidity from DHT sensor
+  float temperature = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  // Check if the readings are valid
+  if (isnan(temperature) || isnan(humidity)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  // Print temperature and humidity to Serial Monitor
+  Serial.print("Temperature: ");
+  Serial.print(temperature);
+  Serial.print(" °C, Humidity: ");
+  Serial.print(humidity);
+  Serial.println(" %");
+
+  // Check conditions and control the LED
+  if (temperature < 20 && humidity > 50) {
+    digitalWrite(GLED, HIGH); // Turn on the LED
+    Serial.println("LED ON");
+    digitalWrite(RLED, LOW); 
+  } else {
+    digitalWrite(RLED, HIGH); // Turn off the LED
+    Serial.println("LED OFF");
+    digitalWrite(GLED, LOW);
+  }
+
+  delay(2000); // Delay for 2 seconds before reading again
+}
+
+
+
+//firebase //DHT sensor library   Firebase ESP32 Client //https://wokwi.com/projects/385293379872659457
+#include <WiFi.h>
+#include <FirebaseESP32.h>
+#include <addons/TokenHelper.h>
+
+#include "DHT.h"
+
+
+#define TempSensor 15
+#define DHTTYPE DHT22
+DHT dht(TempSensor, DHTTYPE);
+
+#define API_KEY "AIzaSyCgBXV34hvx-o-Y1A0d-iXaeRphktwGj0Y"
+#define DATABASE_URL "https://testnew-smart-default-rtdb.asia-southeast1.firebasedatabase.app/" //<databaseName>.firebaseio.com or <databaseName>.<region>.firebasedatabase.app
+
+#define USER_EMAIL "game@gmail.com"
+#define USER_PASSWORD "12345678"
+
+
+FirebaseData fbdo;
+
+FirebaseAuth auth;
+FirebaseConfig config;
+
+
+void setup_wifi(){
+  Serial.print("Connecting to WiFi");
+  WiFi.begin("Wokwi-GUEST", "");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(500);
+  }
+  Serial.println();
+  Serial.print("Connected: ");
+  Serial.println(WiFi.localIP());
+}
+
+void setup() {
+
+  pinMode(14, OUTPUT);
+
+  Serial.begin(115200);
+  setup_wifi();
+
+  
+  config.api_key = API_KEY;
+
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
+
+  config.database_url = DATABASE_URL;
+
+  config.token_status_callback = tokenStatusCallback;
+
+  Firebase.begin(&config, &auth);
+  Firebase.reconnectWiFi(true);
+ 
+
+
+}
+
+String read_data = "";
+
+void loop() {
+
+  delay(10);
+  FirebaseJson json;
+
+
+  float tempState = dht.readTemperature();
+  float humidity = dht.readHumidity();
+
+  if (Firebase.set(fbdo, "/temperature", tempState)) {
+    Serial.println("Temperature sent to Firebase!");
+  } else {
+    Serial.println("Failed to send temperature to Firebase.");
+    Serial.println("Error: " + fbdo.errorReason());
+  }
+
+  if (Firebase.getString(fbdo, "/status")){
+
+      if (fbdo.dataType() == "string"){
+
+          read_data = fbdo.stringData();
+          Serial.print("Data received: ");
+          Serial.println(read_data); 
+      }
+
+  }
+
+  if(read_data == "ON"){
+    digitalWrite(14, HIGH);
+   
+  }else{
+    digitalWrite(14, LOW);
+  }
+  
+ 
+  
+}
+
+
+
+//as //Firebase ESP32 Client   //https://wokwi.com/projects/385293468206807041
+#include <WiFi.h>
+
+
+const char* SSID = "Wokwi-GUEST";
+const char* PASSWORD = "";
+
+void WifiMethod(){
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(SSID,PASSWORD);
+  Serial.print("Wifi is connecting to");
+  while(WiFi.status() != WL_CONNECTED){
+    Serial.print(".");
+    delay(300);
+  }
+  Serial.print(WiFi.localIP());
+}
+
+
+
+void setup() {
+  // put your setup code here, to run once:
+
+
+  Serial.begin(115200);
+  WifiMethod();
+  Serial.println("RRSI");
+  Serial.println(WiFi.RSSI());
+}
+
+void loop() {
+
+  // DatabaseReference temp = database.getReference("temperature");
+  //       temp.addValueEventListener(new ValueEventListener()
+  //       if(snapshot.exists()){
+  //           float temp = snapshot.getValue(float.class);
+  //           textView.setText(String.valueOf(temp));
+  //       }
+  
+}
+
+
+
+
+
+//AS
+
+// package com.example.myapplicationnew;
+
+// import androidx.annotation.NonNull;
+// import androidx.appcompat.app.AppCompatActivity;
+
+// import android.os.Bundle;
+// import android.view.View;
+// import android.widget.Button;
+// import android.widget.TextView;
+
+// import com.google.firebase.database.DataSnapshot;
+// import com.google.firebase.database.DatabaseError;
+// import com.google.firebase.database.DatabaseReference;
+// import com.google.firebase.database.FirebaseDatabase;
+// import com.google.firebase.database.ValueEventListener;
+
+// public class MainActivity extends AppCompatActivity {
+
+//     Button button,button1;
+//     TextView textView;
+
+//     @Override
+//     protected void onCreate(Bundle savedInstanceState) {
+//         super.onCreate(savedInstanceState);
+//         setContentView(R.layout.activity_main);
+
+//         button = (Button) findViewById(R.id.button);
+//         button1 = (Button) findViewById(R.id.button2);
+//         textView = (TextView) findViewById(R.id.id1);
+
+//         FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+
+//         button.setOnClickListener(new View.OnClickListener() {
+//             @Override
+//             public void onClick(View view) {
+//                 DatabaseReference myRef = database.getReference("status");
+//                 myRef.setValue("ON");
+
+//             }
+//         });
+
+//         button1.setOnClickListener(new View.OnClickListener() {
+//             @Override
+//             public void onClick(View view) {
+//                 DatabaseReference myRef = database.getReference("status");
+//                 myRef.setValue("OFF");
+//             }
+//         });
+
+//         DatabaseReference temp = database.getReference("temperature");
+//         temp.addValueEventListener(new ValueEventListener() {
+//             @Override
+//             public void onDataChange(@NonNull DataSnapshot snapshot) {
+//                 if(snapshot.exists()){
+//                     float temp = snapshot.getValue(float.class);
+//                     textView.setText(String.valueOf(temp));
+//                 }
+//             }
+
+//             @Override
+//             public void onCancelled(@NonNull DatabaseError error) {
+
+//             }
+//         });
+
+
+
+
+
+//     }
+// }
+
+
+
+
+//ultrasonic //https://wokwi.com/projects/385293185309369345
+
+const int trigPin = 5;
+const int echoPin = 18;
+
+#include "DHT.h"
+
+
+#define DHTPIN 4     
+#define DHTTYPE DHT22
+DHT dht(DHTPIN, DHTTYPE);
+
+#define SOUND_SPEED 0.034
+#define CM_TO_INCH 0.393701   
+
+#define BUZZZER_PIN  23
+
+
+long duration;
+float distanceCm;
+float distanceInch;
+
+
+
+void setup() {
+  Serial.begin(9600);
+  Serial.println("Start!");
+
+  pinMode(trigPin, OUTPUT); 
+  pinMode(echoPin, INPUT);
+
+  dht.begin();
+
+  pinMode(13, OUTPUT);
+  pinMode(23, OUTPUT);
+}
+
+void loop() {
+ 
+  delay(10);
+
+  
+  float h = dht.readHumidity();
+ 
+  float t = dht.readTemperature();
+  
+
+  Serial.print("Humidity: ");
+  Serial.print(h);
+ 
+  Serial.print("         Temperature: ");
+  Serial.print(t);
+  Serial.println("");
+
+
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  duration = pulseIn(echoPin, HIGH);
+
+  distanceCm = duration * SOUND_SPEED/2;
+
+  distanceInch = distanceCm * CM_TO_INCH;
+
+  Serial.print("Distance (cm): ");
+  Serial.print(distanceCm);
+  
+  Serial.print("     Distance (inch): ");
+  Serial.print(distanceInch);
+  Serial.println("");
+  
+  delay(1000);
+
+
+
+  if(distanceCm > 200){
+    digitalWrite(13, HIGH);
+    delay(1000);
+    digitalWrite(13, LOW);
+    delay(1000);
+
+  }else{
+    digitalWrite(13, LOW);
+  }
+
+
+  if(h>33 && t<40){
+    tone(23, 262, 250);
+    delay(1000);
+
+
+  }else{
+    tone(23, 0,0);
+    delay(1000);
+  }
+}
+
+
+
+//pir //LiquidCrystal I2C  //ESP32Servo //https://wokwi.com/projects/385292967317743617
+#include <ESP32Servo.h>
+#include <LiquidCrystal_I2C.h>
+//You must need to connect LCD SDA,SCL lines as below to esp32
+//SDA (data line): 21
+//SCL (clock line): 22
+
+#define pir 14 //PIR sensor
+
+LiquidCrystal_I2C LCD (0x27, 16, 2); //LCD
+
+const int servoPin = 13; //servo motor pin
+Servo servo;
+
+
+void setup() {
+  
+  Serial.begin(115200);
+  LCD.init();
+  LCD.backlight();
+  LCD.begin(16, 2);
+ 
+  pinMode(pir, INPUT);
+  pinMode(18, OUTPUT);
+  pinMode(17, OUTPUT);
+
+  servo.attach(servoPin, 500, 2400);
+  
+ 
+}
+
+int pos = 0;
+int sensor =0;
+
+void loop() {
+
+  int sensor = digitalRead(pir);
+
+  if(sensor == 1){
+    digitalWrite(18, HIGH);
+
+    digitalWrite(17, HIGH);
+    tone(17, 262, 250);
+    delay(1000);
+
+    LCD.clear();
+    LCD.setCursor(0, 0);
+    LCD.print("Motion...");
+    LCD.setCursor(0, 1);
+    LCD.print("Window closed");
+    delay(1000);
+
+    for (pos = 0; pos <= 180; pos += 1) {
+      servo.write(pos);
+      delay(15);
+    }
+    for (pos = 0; pos <= 180; pos += 1) {
+      servo.write(pos);
+      delay(15);
+    }
+
+    
+    
+  }else{
+    digitalWrite(18, LOW);
+    
+    digitalWrite(17, LOW);
+    tone(17, 0, 0);
+    delay(1000);
+
+    LCD.clear();
+    LCD.setCursor(0, 0);
+    LCD.print("No Motion");
+    LCD.setCursor(0, 1);
+    LCD.print("Window open");
+    delay(1000);
+
+  }
+
+   
+}
+
+
+
+//Rpi //https://wokwi.com/projects/385293225483463681
+
+from machine import I2C,Pin
+from picozero import Speaker
+from time import sleep
+from dht import DHT22   
+
+
+from pico_i2c_lcd import I2cLcd
+
+
+i2c = I2C(0, sda=Pin(0), scl=Pin(1), freq=400000)
+I2C_ADDR = i2c.scan()[0]
+lcd = I2cLcd(i2c, I2C_ADDR, 2, 16)
+
+dht = DHT22(Pin(15)) 
+speaker = Speaker(5)
+LED1 = Pin(8, Pin.OUT)
+LED2 = Pin(20,Pin.OUT)
+
+while True:
+    
+    dht.measure()
+    temp = dht.temperature()
+    hum = dht.humidity()
+
+
+    print(f"Temperature: {temp}°C   Humidity: {hum}% ")
+    lcd.move_to(0,0)
+    lcd.putstr(f"T: {temp}°C")
+    lcd.move_to(0,1)
+    lcd.putstr(f"H: {hum}%")
+
+    if(temp>20):
+        LED2.off()
+        LED1.on()
+        speaker.on()
+        sleep(1)
+        speaker.off()
+        sleep(1)
+
+        
+    else:
+        LED1.off()
+        LED2.on()
+    sleep(2)
+     
+
+
+
+//stm //https://wokwi.com/projects/385294093903654913
+#include "LiquidCrystal_I2C.h"
+
+#define I2C_ADDR    0x27
+#define LCD_COLUMNS 16
+#define LCD_LINES   2
+
+LiquidCrystal_I2C lcd(I2C_ADDR, LCD_COLUMNS, LCD_LINES);
+
+void setup() {
+  Serial.begin(115200);
+  Serial.println("Hello, STM32!");
+
+  lcd.init();
+  lcd.backlight();
+
+  lcd.setCursor(0, 0);
+  lcd.print("Hello, STM32");
+
+  pinMode(A3, OUTPUT);
+  pinMode(A2, OUTPUT);
+  pinMode(A1, OUTPUT);
+  
+}
+
+void loop() {
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("red");
+  digitalWrite(A3, HIGH);
+  delay(1000); 
+  digitalWrite(A3, LOW);
+  delay(1000); 
+  
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("green");
+  digitalWrite(A2, HIGH);
+  delay(1000); 
+  digitalWrite(A2, LOW);
+  delay(1000); 
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("blue");
+  digitalWrite(A1, HIGH);
+  delay(1000); 
+  digitalWrite(A1, LOW);
+  delay(1000); 
+}
+
+
+
+
+
+ESP32
+======
+LED Blink
+https://wokwi.com/projects/385293441803661313
+
+DHTwith LEDs_OK
+https://wokwi.com/projects/385279460667171841
+
+UltrasonicwithLED_OK
+https://wokwi.com/projects/385282346065414145
+
+Ultrasonic_OK
+https://wokwi.com/projects/385293024709459969
+
+PIR,LCD,SERVO_OK
+https://wokwi.com/projects/385292967317743617
+
+WIFI_OK
+https://wokwi.com/projects/385293468206807041
+
+Ultrasonic,DHT22_OK
+https://wokwi.com/projects/385293185309369345
+
+Attendace_OK
+https://wokwi.com/projects/385293302999448577
+
+Servo Motor_OK
+https://wokwi.com/projects/385293330473190401
+
+IR_OK
+https://wokwi.com/projects/385293355593928705
+
+DHT22_OK
+https://wokwi.com/projects/385293379872659457
+
+RASPBERRY
+==========
+PY_Buzzer_OK
+https://wokwi.com/projects/385293071402552321
+
+PIR_OK
+https://wokwi.com/projects/385293102383781889
+
+DHT,LCD_OK
+https://wokwi.com/projects/385293225483463681
+
+Nuclear Board
+==============
+WhiteBoard,RGB,LCD
+https://wokwi.com/projects/385294093903654913
+
+RGB,Whiteboard_OK
+https://wokwi.com/projects/373738084243438593
+
+Arduino UNO
+============
+Trafficlight_OK
+https://wokwi.com/projects/385293405770392577
